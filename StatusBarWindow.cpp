@@ -33,6 +33,13 @@ BOOL StatusBarWindowGetRect( LPRECT lpRect )
 
 } // End of function StatusBarWindowGetRect
 
+void StatusBarWindowSetFont( HFONT hFont, BOOL bRedraw )
+{
+	// Set status bar window font
+	SendMessage( g_hWndStatusBar, WM_SETFONT, ( WPARAM )hFont, ( LPARAM )bRedraw );
+
+} // End of function StatusBarWindowSetFont
+
 BOOL StatusBarWindowSetText( LPCTSTR lpszStatusText )
 {
 	// Set status bar window text

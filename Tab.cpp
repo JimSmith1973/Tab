@@ -26,21 +26,17 @@ BOOL TabControlWindowCreate(HWND hWndParent )
 {
 	BOOL bResult = FALSE;
 
-	RECT rcClient;
 	INITCOMMONCONTROLSEX iccex;
 
-	// Initialize common controls structure
+	// Initialise common controls structure
 	iccex.dwSize	= sizeof( INITCOMMONCONTROLSEX );
 	iccex.dwICC		= ICC_TAB_CLASSES;
 
 	// Initialise common controls
 	InitCommonControlsEx( &iccex );
 
-	// Get client size
-	GetClientRect( hWndParent, &rcClient );
-
 	// Create tab control window
-	g_hWndTabControl = CreateWindowEx( TAB_CONTROL_WINDOW_EXTENDED_STYLE, TAB_CONTROL_WINDOW_CLASS_NAME, TAB_CONTROL_WINDOW_TITLE, TAB_CONTROL_WINDOW_STYLE, 0, 0, rcClient.right, rcClient.bottom, hWndParent, NULL, g_hInstance, NULL );
+	g_hWndTabControl = CreateWindowEx( TAB_CONTROL_WINDOW_EXTENDED_STYLE, TAB_CONTROL_WINDOW_CLASS_NAME, TAB_CONTROL_WINDOW_TITLE, TAB_CONTROL_WINDOW_STYLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, hWndParent, NULL, g_hInstance, NULL );
 
 	// Ensure that tab control window was created
 	if( g_hWndTabControl )
@@ -89,17 +85,19 @@ HWND DoCreateDisplayWindow()
     return hwndStatic;
 }
 
-HRESULT OnSize( LPARAM lParam )
+BOOL TabControlWindowMove( int nLeft, int nTop, int nWidth, int nHeight, BOOL bRepaint = TRUE )
 {
-    if (g_hWndTabControl == NULL)
-        return E_INVALIDARG;
+	// Move tab control window
+	return MoveWindow( g_hWndTabControl, nLeft, nTop, nWidth, nHeight, bRepaint );
 
-    // Resize the tab control to fit the client are of main window.
-     if (!SetWindowPos(g_hWndTabControl, HWND_TOP, 0, 0, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), SWP_SHOWWINDOW))
-        return E_FAIL;
+} // End of function TabControlWindowMove
 
-    return S_OK;
-}
+void TabControlWindowSetFont( HFONT hFont, BOOL bRedraw = TRUE )
+{
+	// Set tab control window font
+	SendMessage( g_hWndTabControl, WM_SETFONT, ( WPARAM )hFont, ( LPARAM )bRedraw );
+
+} // End of function TabControlWindowSetFont
 
 BOOL OnNotify( HWND hwndDisplay, LPARAM lParam)
 {
@@ -171,17 +169,29 @@ LRESULT CALLBACK MainWindowProcedure( HWND hWndMain, UINT uMessage, WPARAM wPara
 			// Update global instance handle
 			g_hInstance = hInstance;
 
-			// Create tab control window
-			TabControlWindowCreate( hWndMain );
-
-			// Create status bar window
-			if( StatusBarWindowCreate( hWndMain, hInstance ) )
+			// Create
+			if( TabControlWindowCreate( hWndMain ) )
 			{
-				// Successfully created status bar window
+				// Successfully created tab control window
+				HFONT hFont;
 
-				StatusBarWindowSetText( "Hello" );
+				// Get font
+				hFont = ( HFONT )GetStockObject( DEFAULT_GUI_FONT );
 
-			} // End of successfully created status bar window
+				// Set tab control window font
+				TabControlWindowSetFont( hFont );
+
+				// Create status bar window
+				if( StatusBarWindowCreate( hWndMain, hInstance ) )
+				{
+					// Successfully created status bar window
+
+					// Set status bar window font
+					StatusBarWindowSetFont( hFont );
+
+				} // End of successfully created status bar window
+
+			} // End of successfully created tab control window
 
 			// Break out of switch
 			break;
@@ -192,6 +202,9 @@ LRESULT CALLBACK MainWindowProcedure( HWND hWndMain, UINT uMessage, WPARAM wPara
 			// A size message
 			int nClientWidth;
 			int nClientHeight;
+			RECT rcStatusBar;
+			int nStatusBarWindowHeight;
+			int nTabControlWindowHeight;
 
 			// Store client width and height
 			nClientWidth	= ( int )LOWORD( lParam );
@@ -199,6 +212,16 @@ LRESULT CALLBACK MainWindowProcedure( HWND hWndMain, UINT uMessage, WPARAM wPara
 
 			// Size status bar window
 			StatusBarWindowSize();
+
+			// Get status bar window size
+			StatusBarWindowGetRect( &rcStatusBar );
+
+			// Calculate window sizes
+			nStatusBarWindowHeight	= ( rcStatusBar.bottom - rcStatusBar.top );
+			nTabControlWindowHeight	= ( nClientHeight - nStatusBarWindowHeight );
+
+			// Move tab control window
+			TabControlWindowMove( 0, 0, nClientWidth, nTabControlWindowHeight );
 
 			// Break out of switch
 			break;

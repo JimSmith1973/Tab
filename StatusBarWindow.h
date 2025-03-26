@@ -18,6 +18,8 @@ BOOL StatusBarWindowCreate( HWND hWndParent, HINSTANCE hInstance );
 
 BOOL StatusBarWindowGetRect( LPRECT lpRect );
 
+void StatusBarWindowSetFont( HFONT hFont, BOOL bRedraw = TRUE );
+
 BOOL StatusBarWindowSetText( LPCTSTR lpszStatusText );
 
 LRESULT StatusBarWindowSize();
