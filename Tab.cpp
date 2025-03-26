@@ -2,6 +2,132 @@
 
 #include "Tab.h"
 
+// Global variables
+HINSTANCE g_hInstance;
+HWND g_hWndTabControl;
+
+#define TAB_CONTROL_TITLES							{ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }
+
+typedef enum
+{
+	TAB_CONTROL_IDS_SUNDAY = 0,
+	TAB_CONTROL_IDS_MONDAY,
+	TAB_CONTROL_IDS_TUESDAY,
+	TAB_CONTROL_IDS_WEDNESDAY,
+	TAB_CONTROL_IDS_THURSDAY,
+	TAB_CONTROL_IDS_FRIDAY,
+	TAB_CONTROL_IDS_SATURDAY,
+
+	TAB_CONTROL_NUMBER_OF_DAYS
+
+} DAYS;
+
+BOOL TabControlWindowCreate(HWND hWndParent )
+{
+	BOOL bResult = FALSE;
+
+	RECT rcClient;
+	INITCOMMONCONTROLSEX iccex;
+
+	// Initialize common controls structure
+	iccex.dwSize	= sizeof( INITCOMMONCONTROLSEX );
+	iccex.dwICC		= ICC_TAB_CLASSES;
+
+	// Initialise common controls
+	InitCommonControlsEx( &iccex );
+
+	// Get client size
+	GetClientRect( hWndParent, &rcClient );
+
+	// Create tab control window
+	g_hWndTabControl = CreateWindowEx( TAB_CONTROL_WINDOW_EXTENDED_STYLE, TAB_CONTROL_WINDOW_CLASS_NAME, TAB_CONTROL_WINDOW_TITLE, TAB_CONTROL_WINDOW_STYLE, 0, 0, rcClient.right, rcClient.bottom, hWndParent, NULL, g_hInstance, NULL );
+
+	// Ensure that tab control window was created
+	if( g_hWndTabControl )
+	{
+		// Successfully created tab control window
+		TCITEM tcItem;
+		int nWhichDay;
+		LPCTSTR lpszTabControlTitles [] = TAB_CONTROL_TITLES;
+
+		// Clear tab control item structure
+		ZeroMemory( &tcItem, sizeof( tcItem ) );
+
+		// Initialise tab control item structure
+		tcItem.mask = TCIF_TEXT;
+
+		// Loop through daya
+		for( nWhichDay = 0; nWhichDay < TAB_CONTROL_NUMBER_OF_DAYS; nWhichDay ++ )
+		{
+			// Update tab control item structure for current day
+			tcItem.pszText = ( LPTSTR )lpszTabControlTitles[ nWhichDay ];
+
+			// Add item to tab control window
+			if( TabCtrl_InsertItem( g_hWndTabControl, nWhichDay, &tcItem ) >= 0 )
+			{
+				// Successfully added item to tab control window
+			} // End of successfully added item to tab control window
+
+		}; // End of loop through days
+
+		// Update return value
+		bResult = TRUE;
+
+	} // End of successfully created tab control window
+
+	return bResult;
+
+} // End of function TabControlWindowCreate
+
+HWND DoCreateDisplayWindow()
+{
+    HWND hwndStatic = CreateWindow(WC_STATIC, "",
+        WS_CHILD | WS_VISIBLE | WS_BORDER,
+        100, 100, 100, 100,        // Position and dimensions; example only.
+        GetParent(g_hWndTabControl), NULL, g_hInstance, // g_hInstance is the global instance handle
+        NULL);
+    return hwndStatic;
+}
+
+HRESULT OnSize( LPARAM lParam )
+{
+    if (g_hWndTabControl == NULL)
+        return E_INVALIDARG;
+
+    // Resize the tab control to fit the client are of main window.
+     if (!SetWindowPos(g_hWndTabControl, HWND_TOP, 0, 0, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), SWP_SHOWWINDOW))
+        return E_FAIL;
+
+    return S_OK;
+}
+
+BOOL OnNotify( HWND hwndDisplay, LPARAM lParam)
+{
+    TCHAR achTemp[256]; // temporary buffer for strings
+
+    switch (((LPNMHDR)lParam)->code)
+        {
+            case TCN_SELCHANGING:
+                {
+                    // Return FALSE to allow the selection to change.
+                    return FALSE;
+                }
+
+            case TCN_SELCHANGE:
+                {
+                    int iPage = TabCtrl_GetCurSel(g_hWndTabControl);
+
+                    // Note that g_hInstance is the global instance handle.
+                    LoadString( g_hInstance, TAB_CONTROL_IDS_SUNDAY + iPage, achTemp,
+                        sizeof(achTemp) / sizeof(achTemp[0]));
+                   SendMessage(hwndDisplay, WM_SETTEXT, 0,
+                        (LPARAM) achTemp);
+                    break;
+                }
+        }
+        return TRUE;
+}
+
 int ShowAboutMessage( HWND hWndParent )
 {
 	int nResult = 0;
@@ -41,6 +167,12 @@ LRESULT CALLBACK MainWindowProcedure( HWND hWndMain, UINT uMessage, WPARAM wPara
 
 			// Get instance
 			hInstance = ( ( LPCREATESTRUCT )lParam )->hInstance;
+
+			// Update global instance handle
+			g_hInstance = hInstance;
+
+			// Create tab control window
+			TabControlWindowCreate( hWndMain );
 
 			// Create status bar window
 			if( StatusBarWindowCreate( hWndMain, hInstance ) )
