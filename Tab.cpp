@@ -6,7 +6,6 @@
 HINSTANCE g_hInstance;
 HWND g_hWndTabControl;
 
-#define TAB_CONTROL_TITLES							{ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }
 
 typedef enum
 {
@@ -44,7 +43,7 @@ BOOL TabControlWindowCreate(HWND hWndParent )
 		// Successfully created tab control window
 		TCITEM tcItem;
 		int nWhichDay;
-		LPCTSTR lpszTabControlTitles [] = TAB_CONTROL_TITLES;
+		LPCTSTR lpszTabControlTitles [] = TAB_CONTROL_WINDOW_TITLES;
 
 		// Clear tab control item structure
 		ZeroMemory( &tcItem, sizeof( tcItem ) );
@@ -59,7 +58,7 @@ BOOL TabControlWindowCreate(HWND hWndParent )
 			tcItem.pszText = ( LPTSTR )lpszTabControlTitles[ nWhichDay ];
 
 			// Add item to tab control window
-			if( TabCtrl_InsertItem( g_hWndTabControl, nWhichDay, &tcItem ) >= 0 )
+			if( SendMessage( g_hWndTabControl, TCM_INSERTITEM, ( WPARAM )nWhichDay, ( LPARAM )&tcItem ) >= 0 )
 			{
 				// Successfully added item to tab control window
 			} // End of successfully added item to tab control window
@@ -75,15 +74,43 @@ BOOL TabControlWindowCreate(HWND hWndParent )
 
 } // End of function TabControlWindowCreate
 
-HWND DoCreateDisplayWindow()
+BOOL TabControlWindowHandleNotifyMessage( WPARAM, LPARAM lParam, BOOL( *lpStatusFunction )( LPCTSTR lpszStatusMessage ))
 {
-    HWND hwndStatic = CreateWindow(WC_STATIC, "",
-        WS_CHILD | WS_VISIBLE | WS_BORDER,
-        100, 100, 100, 100,        // Position and dimensions; example only.
-        GetParent(g_hWndTabControl), NULL, g_hInstance, // g_hInstance is the global instance handle
-        NULL);
-    return hwndStatic;
-}
+	BOOL bResult = FALSE;
+
+	LPNMHDR lpNmHdr;
+
+	// Get notify message handler
+	lpNmHdr = ( LPNMHDR )lParam;
+
+	// Select notify message
+	switch( lpNmHdr->code )
+	{
+		case TCN_SELCHANGE:
+		{
+			// A selection change message
+			int nSelectedTab;
+			LPCTSTR lpszTabControlTitles [] = TAB_CONTROL_WINDOW_TITLES;
+
+			// Get selected tab
+			nSelectedTab = SendMessage( g_hWndTabControl, TCM_GETCURSEL, ( WPARAM )NULL, ( LPARAM )NULL );
+
+			// Show selected tab
+			( *lpStatusFunction )( lpszTabControlTitles[ nSelectedTab ] );
+
+			// Update return value
+			bResult = TRUE;
+
+			// Break out of switch
+			break;
+
+		} // End of a selection change message
+
+	}; // End of selection for notify message
+
+	return bResult;
+
+} // End of function TabControlWindowHandleNotifyMessage
 
 BOOL TabControlWindowMove( int nLeft, int nTop, int nWidth, int nHeight, BOOL bRepaint = TRUE )
 {
@@ -98,33 +125,6 @@ void TabControlWindowSetFont( HFONT hFont, BOOL bRedraw = TRUE )
 	SendMessage( g_hWndTabControl, WM_SETFONT, ( WPARAM )hFont, ( LPARAM )bRedraw );
 
 } // End of function TabControlWindowSetFont
-
-BOOL OnNotify( HWND hwndDisplay, LPARAM lParam)
-{
-    TCHAR achTemp[256]; // temporary buffer for strings
-
-    switch (((LPNMHDR)lParam)->code)
-        {
-            case TCN_SELCHANGING:
-                {
-                    // Return FALSE to allow the selection to change.
-                    return FALSE;
-                }
-
-            case TCN_SELCHANGE:
-                {
-                    int iPage = TabCtrl_GetCurSel(g_hWndTabControl);
-
-                    // Note that g_hInstance is the global instance handle.
-                    LoadString( g_hInstance, TAB_CONTROL_IDS_SUNDAY + iPage, achTemp,
-                        sizeof(achTemp) / sizeof(achTemp[0]));
-                   SendMessage(hwndDisplay, WM_SETTEXT, 0,
-                        (LPARAM) achTemp);
-                    break;
-                }
-        }
-        return TRUE;
-}
 
 int ShowAboutMessage( HWND hWndParent )
 {
@@ -345,9 +345,22 @@ LRESULT CALLBACK MainWindowProcedure( HWND hWndMain, UINT uMessage, WPARAM wPara
 			lpNmHdr = ( LPNMHDR )lParam;
 
 			// Source window is lpNmHdr->hwndFrom
+			// See if notify message is from tab control window
+			if( lpNmHdr->hwndFrom == g_hWndTabControl )
+			{
+				// Notify message is from tab control window
 
-			// Call default procedure
-			lr = DefWindowProc( hWndMain, uMessage, wParam, lParam );
+				// Handle notify message from tab control window
+				if( !( TabControlWindowHandleNotifyMessage( wParam, lParam, &StatusBarWindowSetText ) ) )
+				{
+					// Notify message was not handled from tab control window
+
+					// Call default procedure
+					lr = DefWindowProc( hWndMain, uMessage, wParam, lParam );
+
+				} // End of notify message was not handled from tab control window
+
+			} // End of notify message is from tab control window
 
 			// Break out of switch
 			break;

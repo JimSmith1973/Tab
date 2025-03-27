@@ -35,6 +35,8 @@
 #define TAB_CONTROL_WINDOW_TITLE												NULL
 #define TAB_CONTROL_WINDOW_STYLE												( WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE )
 
+#define TAB_CONTROL_WINDOW_TITLES												{ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }
+
 #define SYSTEM_MENU_SEPARATOR_ITEM_POSITION										5
 #define SYSTEM_MENU_ABOUT_ITEM_POSITION											6
 #define SYSTEM_MENU_ABOUT_ITEM_TEXT												"About"
