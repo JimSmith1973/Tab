@@ -37,4 +37,8 @@ BOOL TabControlWindowHandleNotifyMessage( WPARAM, LPARAM lParam, BOOL( *lpStatus
 
 BOOL TabControlWindowMove( int nLeft, int nTop, int nWidth, int nHeight, BOOL bRepaint = TRUE );
 
+BOOL TabControlWindowSelectionChange( BOOL( *lpStatusFunction )( LPCTSTR lpszStatusMessage ) );
+
+BOOL TabControlWindowSelectionChange( int nSelectedTab, BOOL( *lpStatusFunction )( LPCTSTR lpszStatusMessage ) );
+
 void TabControlWindowSetFont( HFONT hFont, BOOL bRedraw = TRUE );

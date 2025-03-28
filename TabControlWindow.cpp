@@ -79,17 +79,9 @@ BOOL TabControlWindowHandleNotifyMessage( WPARAM, LPARAM lParam, BOOL( *lpStatus
 		case TCN_SELCHANGE:
 		{
 			// A selection change message
-			int nSelectedTab;
-			LPCTSTR lpszTabControlTitles [] = TAB_CONTROL_WINDOW_TITLES;
 
-			// Get selected tab
-			nSelectedTab = SendMessage( g_hWndTabControl, TCM_GETCURSEL, ( WPARAM )NULL, ( LPARAM )NULL );
-
-			// Show selected tab
-			( *lpStatusFunction )( lpszTabControlTitles[ nSelectedTab ] );
-
-			// Update return value
-			bResult = TRUE;
+			// Call selection change function
+			bResult = TabControlWindowSelectionChange( lpStatusFunction );
 
 			// Break out of switch
 			break;
@@ -108,6 +100,66 @@ BOOL TabControlWindowMove( int nLeft, int nTop, int nWidth, int nHeight, BOOL bR
 	return MoveWindow( g_hWndTabControl, nLeft, nTop, nWidth, nHeight, bRepaint );
 
 } // End of function TabControlWindowMove
+
+BOOL TabControlWindowSelectionChange( BOOL( *lpStatusFunction )( LPCTSTR lpszStatusMessage ) )
+{
+	BOOL bResult = FALSE;
+
+	int nSelectedTab;
+
+	// Get selected tab
+	nSelectedTab = SendMessage( g_hWndTabControl, TCM_GETCURSEL, ( WPARAM )NULL, ( LPARAM )NULL );
+
+	// Ensure that selected tab was got
+	if( nSelectedTab >= 0 )
+	{
+		// Successfully got selected tab
+
+		// Call selection change function
+		bResult = TabControlWindowSelectionChange( nSelectedTab, lpStatusFunction );
+
+		// Update return value
+		bResult = TRUE;
+
+	} // End of successfully got selected tab
+
+	return bResult;
+
+} // End of function TabControlWindowSelectionChange
+
+BOOL TabControlWindowSelectionChange( int nSelectedTab, BOOL( *lpStatusFunction )( LPCTSTR lpszStatusMessage ) )
+{
+	BOOL bResult = FALSE;
+
+	TCITEM tcItem;
+
+	// Allocate string memory
+	LPTSTR lpszItemText = new char[ STRING_LENGTH + sizeof( char ) ];
+
+	// Clear tab control item structure
+	ZeroMemory( &tcItem, sizeof( tcItem ) );
+
+	// Initialise tab control item structure
+	tcItem.mask			= TCIF_TEXT;
+	tcItem.pszText		= lpszItemText;
+	tcItem.cchTextMax	= STRING_LENGTH;
+
+	// Get item text
+	if( SendMessage( g_hWndTabControl, TCM_GETITEM, ( WPARAM )nSelectedTab, ( LPARAM )&tcItem ) )
+	{
+		// Successfully got item text
+
+		// Show item text
+		( *lpStatusFunction )( lpszItemText );
+
+	} // End of successfully got item text
+
+	// Free string memory
+	delete [] lpszItemText;
+
+	return bResult;
+
+} // End of function TabControlWindowSelectionChange
 
 void TabControlWindowSetFont( HFONT hFont, BOOL bRedraw )
 {
