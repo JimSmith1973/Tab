@@ -12,6 +12,7 @@
 #include "Common.h"
 
 #include "StatusBarWindow.h"
+#include "TabControlWindow.h"
 
 #define MAIN_WINDOW_CLASS_NAME													"Main Tab Window Class"
 
@@ -29,13 +30,6 @@
 
 #define MAIN_WINDOW_MINIMUM_WIDTH												500
 #define MAIN_WINDOW_MINIMUM_HEIGHT												400
-
-#define TAB_CONTROL_WINDOW_CLASS_NAME											WC_TABCONTROL
-#define TAB_CONTROL_WINDOW_EXTENDED_STYLE										0
-#define TAB_CONTROL_WINDOW_TITLE												NULL
-#define TAB_CONTROL_WINDOW_STYLE												( WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE )
-
-#define TAB_CONTROL_WINDOW_TITLES												{ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }
 
 #define SYSTEM_MENU_SEPARATOR_ITEM_POSITION										5
 #define SYSTEM_MENU_ABOUT_ITEM_POSITION											6
