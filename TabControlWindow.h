@@ -31,6 +31,8 @@ typedef enum
 
 BOOL IsTabControlWindow( HWND hWndQuery );
 
+int TabControlWindowAddTab( LPCTSTR lpszTab );
+
 BOOL TabControlWindowCreate( HWND hWndParent, HINSTANCE hInstance );
 
 BOOL TabControlWindowHandleNotifyMessage( WPARAM, LPARAM lParam, BOOL( *lpStatusFunction )( LPCTSTR lpszStatusMessage ) );

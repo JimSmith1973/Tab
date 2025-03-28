@@ -11,6 +11,32 @@ BOOL IsTabControlWindow( HWND hWndQuery )
 
 } // End of function IsTabControlWindow
 
+int TabControlWindowAddTab( LPCTSTR lpszTab )
+{
+	int nResult = -1;
+
+	TCITEM tcItem;
+
+	int nTabCount;
+
+	// Clear tab control item structure
+	ZeroMemory( &tcItem, sizeof( tcItem ) );
+
+	// Initialise tab control item structure
+	tcItem.mask			= TCIF_TEXT;
+	tcItem.pszText		= ( LPTSTR )lpszTab;
+	tcItem.cchTextMax	= STRING_LENGTH;
+
+	// Count tabs
+	nTabCount = SendMessage( g_hWndTabControl, TCM_GETITEMCOUNT, ( WPARAM )NULL, ( LPARAM )NULL );
+
+	// Add item to tab control window
+	nResult = SendMessage( g_hWndTabControl, TCM_INSERTITEM, ( WPARAM )nTabCount, ( LPARAM )&tcItem );
+
+	return nResult;
+
+} // End of function TabControlWindowAddTab
+
 BOOL TabControlWindowCreate( HWND hWndParent, HINSTANCE hInstance )
 {
 	BOOL bResult = FALSE;
@@ -31,32 +57,29 @@ BOOL TabControlWindowCreate( HWND hWndParent, HINSTANCE hInstance )
 	if( g_hWndTabControl )
 	{
 		// Successfully created tab control window
-		TCITEM tcItem;
 		int nWhichDay;
 		LPCTSTR lpszTabControlTitles [] = TAB_CONTROL_WINDOW_TITLES;
 
-		// Clear tab control item structure
-		ZeroMemory( &tcItem, sizeof( tcItem ) );
-
-		// Initialise tab control item structure
-		tcItem.mask = TCIF_TEXT;
+		// Assume success
+		bResult = TRUE;
 
 		// Loop through daya
 		for( nWhichDay = 0; nWhichDay < TAB_CONTROL_WINDOW_NUMBER_OF_DAYS; nWhichDay ++ )
 		{
-			// Update tab control item structure for current day
-			tcItem.pszText = ( LPTSTR )lpszTabControlTitles[ nWhichDay ];
-
 			// Add item to tab control window
-			if( SendMessage( g_hWndTabControl, TCM_INSERTITEM, ( WPARAM )nWhichDay, ( LPARAM )&tcItem ) >= 0 )
+			if( TabControlWindowAddTab( lpszTabControlTitles[ nWhichDay ] ) < 0 )
 			{
-				// Successfully added item to tab control window
-			} // End of successfully added item to tab control window
+				// Unable to add item to tab control window
+
+				// Update return value
+				bResult = TRUE;
+
+				// Force exit from loop
+				nWhichDay = TAB_CONTROL_WINDOW_NUMBER_OF_DAYS;
+
+			} // End of unable to add item to tab control window
 
 		}; // End of loop through days
-
-		// Update return value
-		bResult = TRUE;
 
 	} // End of successfully created tab control window
 
